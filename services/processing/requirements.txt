@@ -1,0 +1,12 @@
+# Spark & Python Brücke
+pyspark==3.5.0
+
+# Kommunikation mit MinIO (für den Orchestrator und Manifest-Check)
+boto3
+botocore
+
+# Hilfsmittel für Fortschrittsanzeigen (optional, falls noch im Code)
+tqdm
+
+# Zeit- und Datumsverarbeitung
+python-dateutil

@@ -1,0 +1,126 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: data_lake
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Berlin
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - minio_data:/data
+    networks:
+      - data_network
+
+  ingestion:
+    build: ./services/ingestion
+    container_name: ingestion_service
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Berlin
+      - PYTHONUNBUFFERED=1
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - DATASET_NAME=elemento/nyc-yellow-taxi-trip-data
+    volumes:
+      - ./kaggle_cache:/root/.cache/
+    networks:
+      - data_network
+    healthcheck:
+      test: ["CMD-SHELL", "find /tmp/ingestion_healthy -mmin -2 | grep . || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  spark-master:
+    image: apache/spark:3.5.0
+    container_name: spark_master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      - TZ=Europe/Berlin
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    networks:
+      - data_network
+
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: spark_worker
+    depends_on:
+      - spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Berlin
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      # Limitierung gegen OOM
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_EXECUTOR_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      # Credentials für S3 Zugriff
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    networks:
+      - data_network
+
+  processing:
+    build: ./services/processing
+    container_name: processing_service
+    depends_on:
+      minio:
+        condition: service_healthy
+      spark-master:
+        condition: service_started
+      spark-worker:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Berlin
+      - PYTHONUNBUFFERED=1
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    networks:
+      - data_network
+    healthcheck:
+      test: ["CMD-SHELL", "find /tmp/processing_healthy -mmin -2 | grep . || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  data_network:
+    driver: bridge
+
+volumes:
+  minio_data:
