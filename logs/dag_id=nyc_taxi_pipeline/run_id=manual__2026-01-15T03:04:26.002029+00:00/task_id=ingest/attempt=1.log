@@ -1,0 +1,57 @@
+[2026-01-15T03:04:27.103+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: nyc_taxi_pipeline.ingest manual__2026-01-15T03:04:26.002029+00:00 [queued]>
+[2026-01-15T03:04:27.108+0000] {taskinstance.py:1956} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: nyc_taxi_pipeline.ingest manual__2026-01-15T03:04:26.002029+00:00 [queued]>
+[2026-01-15T03:04:27.109+0000] {taskinstance.py:2170} INFO - Starting attempt 1 of 1
+[2026-01-15T03:04:27.118+0000] {taskinstance.py:2191} INFO - Executing <Task(DockerOperator): ingest> on 2026-01-15 03:04:26.002029+00:00
+[2026-01-15T03:04:27.123+0000] {standard_task_runner.py:60} INFO - Started process 183 to run task
+[2026-01-15T03:04:27.127+0000] {standard_task_runner.py:87} INFO - Running: ['***', 'tasks', 'run', 'nyc_taxi_pipeline', 'ingest', 'manual__2026-01-15T03:04:26.002029+00:00', '--job-id', '3', '--raw', '--subdir', 'DAGS_FOLDER/nyc_taxi_pipeline.py', '--cfg-path', '/tmp/tmp2bz1g8kw']
+[2026-01-15T03:04:27.130+0000] {standard_task_runner.py:88} INFO - Job 3: Subtask ingest
+[2026-01-15T03:04:27.174+0000] {task_command.py:423} INFO - Running <TaskInstance: nyc_taxi_pipeline.ingest manual__2026-01-15T03:04:26.002029+00:00 [running]> on host 43a2558fbb67
+[2026-01-15T03:04:27.242+0000] {taskinstance.py:2480} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='nyc_taxi_pipeline' AIRFLOW_CTX_TASK_ID='ingest' AIRFLOW_CTX_EXECUTION_DATE='2026-01-15T03:04:26.002029+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-01-15T03:04:26.002029+00:00'
+[2026-01-15T03:04:27.255+0000] {docker.py:359} INFO - Starting docker container from image nyc_ingestion:latest
+[2026-01-15T03:04:27.258+0000] {docker.py:367} WARNING - Using remote engine or docker-in-docker and mounting temporary volume from host is not supported. Falling back to `mount_tmp_dir=False` mode. You can set `mount_tmp_dir` parameter to False to disable mounting and remove the warning
+[2026-01-15T03:04:27.989+0000] {docker.py:429} INFO - /usr/local/lib/python3.9/site-packages/boto3/compat.py:89: PythonDeprecationWarning: Boto3 will no longer support Python 3.9 starting April 29, 2026. To continue receiving service updates, bug fixes, and security updates please upgrade to Python 3.10 or later. More information can be found here: https://aws.amazon.com/blogs/developer/python-support-policy-updates-for-aws-sdks-and-tools/
+  warnings.warn(warning, PythonDeprecationWarning)
+[2026-01-15T03:06:28.230+0000] {docker.py:429} INFO - INFO:Ingest:Suche nach Updates für elemento/nyc-yellow-taxi-trip-data...
+[2026-01-15T03:06:28.489+0000] {docker.py:429} INFO - Warning: Looks like you're using an outdated `kagglehub` version (installed: 0.3.13), please consider upgrading to the latest version (0.4.0).
+[2026-01-15T03:06:28.964+0000] {docker.py:429} INFO - Resuming download from 61865984 bytes (1853760910 bytes left)...
+[2026-01-15T03:06:29.201+0000] {docker.py:429} INFO - Resuming download from https://www.kaggle.com/api/v1/datasets/download/elemento/nyc-yellow-taxi-trip-data?dataset_version_number=2 (61865984/1915626894) bytes left.
+[2026-01-15T03:06:29.205+0000] {docker.py:429} INFO - 3%|▎         | 59.0M/1.78G [00:00<?, ?B/s]
+[2026-01-15T03:06:29.857+0000] {docker.py:429} INFO - 3%|▎         | 60.0M/1.78G [00:00<19:12, 1.61MB/s]
+[2026-01-15T03:06:30.022+0000] {docker.py:429} INFO - 3%|▎         | 62.0M/1.78G [00:00<06:46, 4.56MB/s]
+[2026-01-15T03:06:30.145+0000] {docker.py:429} INFO - 4%|▎         | 64.0M/1.78G [00:00<04:12, 7.32MB/s]
+[2026-01-15T03:06:30.274+0000] {docker.py:429} INFO - 4%|▎         | 66.0M/1.78G [00:01<03:13, 9.53MB/s]
+[2026-01-15T03:06:30.389+0000] {docker.py:429} INFO - 4%|▎         | 68.0M/1.78G [00:01<02:38, 11.6MB/s]
+[2026-01-15T03:06:30.502+0000] {docker.py:429} INFO - 4%|▍         | 70.0M/1.78G [00:01<02:17, 13.4MB/s]
+[2026-01-15T03:06:30.615+0000] {docker.py:429} INFO - 4%|▍         | 72.0M/1.78G [00:01<02:04, 14.7MB/s]
+[2026-01-15T03:06:30.727+0000] {docker.py:429} INFO - 4%|▍         | 74.0M/1.78G [00:01<01:56, 15.8MB/s]
+[2026-01-15T03:06:30.840+0000] {docker.py:429} INFO - 4%|▍         | 76.0M/1.78G [00:01<01:50, 16.6MB/s]
+[2026-01-15T03:06:30.953+0000] {docker.py:429} INFO - 4%|▍         | 78.0M/1.78G [00:01<01:46, 17.2MB/s]
+[2026-01-15T03:06:31.065+0000] {docker.py:429} INFO - 4%|▍         | 80.0M/1.78G [00:01<01:43, 17.6MB/s]
+[2026-01-15T03:06:31.175+0000] {docker.py:429} INFO - 4%|▍         | 82.0M/1.78G [00:01<01:41, 18.0MB/s]
+[2026-01-15T03:06:31.287+0000] {docker.py:429} INFO - 5%|▍         | 84.0M/1.78G [00:02<01:40, 18.2MB/s]
+[2026-01-15T03:06:31.400+0000] {docker.py:429} INFO - 5%|▍         | 86.0M/1.78G [00:02<01:39, 18.4MB/s]
+[2026-01-15T03:06:31.512+0000] {docker.py:429} INFO - 5%|▍         | 88.0M/1.78G [00:02<01:38, 18.5MB/s]
+[2026-01-15T03:06:31.624+0000] {docker.py:429} INFO - 5%|▍         | 90.0M/1.78G [00:02<01:38, 18.5MB/s]
+[2026-01-15T03:06:31.736+0000] {docker.py:429} INFO - 5%|▌         | 92.0M/1.78G [00:02<01:37, 18.6MB/s]
+[2026-01-15T03:06:31.848+0000] {docker.py:429} INFO - 5%|▌         | 94.0M/1.78G [00:02<01:37, 18.6MB/s]
+[2026-01-15T03:06:31.960+0000] {docker.py:429} INFO - 5%|▌         | 96.0M/1.78G [00:02<01:37, 18.7MB/s]
+[2026-01-15T03:06:32.073+0000] {docker.py:429} INFO - 5%|▌         | 98.0M/1.78G [00:02<01:37, 18.6MB/s]
+[2026-01-15T03:06:32.204+0000] {docker.py:429} INFO - 6%|▌         | 101M/1.78G [00:02<01:28, 20.4MB/s]
+[2026-01-15T03:06:32.319+0000] {docker.py:429} INFO - 6%|▌         | 103M/1.78G [00:03<01:31, 19.8MB/s]
+[2026-01-15T03:06:32.425+0000] {docker.py:429} INFO - 6%|▌         | 105M/1.78G [00:03<01:31, 19.8MB/s]
+[2026-01-15T03:06:32.537+0000] {docker.py:429} INFO - 6%|▌         | 107M/1.78G [00:03<01:32, 19.5MB/s]
+[2026-01-15T03:06:32.660+0000] {docker.py:429} INFO - 6%|▌         | 109M/1.78G [00:03<01:36, 18.7MB/s]
+[2026-01-15T03:06:32.795+0000] {docker.py:429} INFO - 6%|▌         | 111M/1.78G [00:03<01:41, 17.7MB/s]
+[2026-01-15T03:06:32.937+0000] {docker.py:429} INFO - 6%|▌         | 113M/1.78G [00:03<01:47, 16.7MB/s]
+[2026-01-15T03:06:33.076+0000] {docker.py:429} INFO - 6%|▋         | 115M/1.78G [00:03<01:50, 16.2MB/s]
+[2026-01-15T03:06:33.213+0000] {docker.py:429} INFO - 6%|▋         | 117M/1.78G [00:04<01:52, 15.9MB/s]
+[2026-01-15T03:06:33.350+0000] {docker.py:429} INFO - 7%|▋         | 119M/1.78G [00:04<01:53, 15.7MB/s]
+[2026-01-15T03:06:33.488+0000] {docker.py:429} INFO - 7%|▋         | 121M/1.78G [00:04<01:54, 15.6MB/s]
+[2026-01-15T03:06:33.626+0000] {docker.py:429} INFO - 7%|▋         | 123M/1.78G [00:04<01:55, 15.5MB/s]
+[2026-01-15T03:06:33.766+0000] {docker.py:429} INFO - 7%|▋         | 125M/1.78G [00:04<01:56, 15.3MB/s]
+[2026-01-15T03:06:33.901+0000] {docker.py:429} INFO - 7%|▋         | 127M/1.78G [00:04<01:55, 15.4MB/s]
+[2026-01-15T03:06:33.909+0000] {local_task_job_runner.py:121} ERROR - Received SIGTERM. Terminating subprocesses
+[2026-01-15T03:06:33.912+0000] {process_utils.py:131} INFO - Sending 15 to group 183. PIDs of all processes in the group: [183]
+[2026-01-15T03:06:33.912+0000] {process_utils.py:86} INFO - Sending the signal 15 to group 183
+[2026-01-15T03:06:33.913+0000] {taskinstance.py:2450} ERROR - Received SIGTERM. Terminating subprocesses.
+[2026-01-15T03:06:33.916+0000] {docker.py:521} INFO - Stopping docker container

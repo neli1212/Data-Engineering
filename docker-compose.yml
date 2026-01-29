@@ -1,69 +1,37 @@
+version: '3.8'
+
 services:
   minio:
     image: minio/minio:latest
-    container_name: data_lake
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    env_file:
-      - .env
-    environment:
-      - TZ=Europe/Berlin
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    container_name: minio
+    ports: ["9000:9000", "9001:9001"]
     command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - minio_data:/data
-    networks:
-      - data_network
+    networks: [data_network]
 
-  ingestion:
-    build: ./services/ingestion
-    container_name: ingestion_service
-    depends_on:
-      minio:
-        condition: service_healthy
-    env_file:
-      - .env
+  postgres:
+    image: postgres:13
+    container_name: airflow_postgres
     environment:
-      - TZ=Europe/Berlin
-      - PYTHONUNBUFFERED=1
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
-      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
-      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
-      - DATASET_NAME=elemento/nyc-yellow-taxi-trip-data
-    volumes:
-      - ./kaggle_cache:/root/.cache/
-    networks:
-      - data_network
-    healthcheck:
-      test: ["CMD-SHELL", "find /tmp/ingestion_healthy -mmin -2 | grep . || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    networks: [data_network]
 
   spark-master:
     image: apache/spark:3.5.0
     container_name: spark_master
+    hostname: spark-master 
     ports:
       - "8080:8080"
       - "7077:7077"
-    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master -h spark-master
     environment:
-      - TZ=Europe/Berlin
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
     networks:
-      - data_network
+      data_network:
+        aliases:
+          - spark-master 
 
   spark-worker:
     image: apache/spark:3.5.0
@@ -71,56 +39,62 @@ services:
     depends_on:
       - spark-master
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
-    env_file:
-      - .env
     environment:
-      - TZ=Europe/Berlin
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      # Limitierung gegen OOM
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_MEMORY=4G
       - SPARK_EXECUTOR_MEMORY=2G
-      - SPARK_WORKER_CORES=2
-      # Credentials für S3 Zugriff
       - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
       - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
     networks:
       - data_network
 
-  processing:
-    build: ./services/processing
-    container_name: processing_service
-    depends_on:
-      minio:
-        condition: service_healthy
-      spark-master:
-        condition: service_started
-      spark-worker:
-        condition: service_started
-    env_file:
-      - .env
+  airflow-init:
+    image: apache/airflow:2.8.1
     environment:
-      - TZ=Europe/Berlin
-      - PYTHONUNBUFFERED=1
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
-      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
-      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
-      - SPARK_MASTER_URL=spark://spark-master:7077
-    networks:
-      - data_network
-    healthcheck:
-      test: ["CMD-SHELL", "find /tmp/processing_healthy -mmin -2 | grep . || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    entrypoint: /bin/bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Peter --lastname Parker --role Admin --email admin@example.com"
+    networks: [data_network]
+
+  airflow-webserver:
+    image: apache/airflow:2.8.1
+    container_name: airflow_webserver
+    depends_on: [airflow-init]
+    command: webserver
+    user: "50000:0"
+    group_add:
+      - "109"  
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: "secret"
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-docker boto3"
+    ports: ["8081:8080"]
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs  
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [data_network]
+
+  airflow-scheduler:
+    image: apache/airflow:2.8.1
+    container_name: airflow_scheduler
+    depends_on: [airflow-init]
+    command: scheduler
+    user: "50000:0"
+    group_add:
+      - "109"  
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: "secret"
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-docker boto3"
+      AIRFLOW_PROJ_DIR: ${PWD}
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs  
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [data_network]
 
 networks:
   data_network:
+    name: nyc_data_network
     driver: bridge
-
-volumes:
-  minio_data:

@@ -1,0 +1,1 @@
+sudo docker compose --profile job build
