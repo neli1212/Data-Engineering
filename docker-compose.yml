@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  nyc_ingestion:
+    build: ./services/ingestion
+    image: nyc_ingestion:latest
+    profiles: ["build-only"] 
+
+  nyc_processing:
+    build: ./services/processing
+    image: nyc_processing:latest
+    profiles: ["build-only"]
+    
   minio:
     image: minio/minio:latest
     container_name: minio
@@ -63,7 +73,7 @@ services:
     command: webserver
     user: "50000:0"
     group_add:
-      - "109"  
+      - "${DOCKER_GID}"  
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__WEBSERVER__SECRET_KEY: "secret"
@@ -82,7 +92,7 @@ services:
     command: scheduler
     user: "50000:0"
     group_add:
-      - "109"  
+      - "${DOCKER_GID}"  
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__WEBSERVER__SECRET_KEY: "secret"

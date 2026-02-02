@@ -1,1 +1,5 @@
-kaggle_cache/
+.ipynb_checkpoints/
+logs/
+kaggle_cache/*
+__pycache__/
+*.pyc
