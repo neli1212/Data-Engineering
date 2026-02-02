@@ -52,8 +52,8 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_EXECUTOR_MEMORY=2G
+      - SPARK_WORKER_MEMORY=${WORKER_MEMORY}
+      - SPARK_EXECUTOR_MEMORY=${EXECUTOR_MEMORY}
       - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
       - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
     networks:
@@ -71,7 +71,7 @@ services:
     container_name: airflow_webserver
     depends_on: [airflow-init]
     command: webserver
-    user: "50000:0"
+    user: "${AIRFLOW_UID:-50000}:0"
     group_add:
       - "${DOCKER_GID}"  
     environment:
@@ -90,7 +90,7 @@ services:
     container_name: airflow_scheduler
     depends_on: [airflow-init]
     command: scheduler
-    user: "50000:0"
+    user: "${AIRFLOW_UID:-50000}:0"
     group_add:
       - "${DOCKER_GID}"  
     environment:

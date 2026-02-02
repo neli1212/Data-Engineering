@@ -27,7 +27,16 @@ MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "minioadmin")           
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minioadmin")       
 MASTER_URL = os.getenv("SPARK_MASTER_URL", "spark://spark-master:7077")  
-
+worker_mem = os.getenv("WORKER_MEMORY", "4g")
+exec_mem = os.getenv("EXECUTOR_MEMORY", "2g")
+worker_g = int(worker_mem.replace('g', '').replace('G', ''))
+if worker_mem.endswith('m'):
+    worker_g = worker_g / 1024
+exec_g = int(exec_mem.replace('g', '').replace('G', ''))
+if exec_mem.endswith('m'):
+    exec_g = exec_g / 1024
+driver_g = max(1, worker_g - exec_g - 1)  # Mindestens 1g
+driver_mem = f"{driver_g}g"
 # =====================================================================
 # Paths & Buckets
 # =====================================================================
@@ -150,6 +159,8 @@ def main():
         .appName("NYC Taxi Processing") \
         .master(MASTER_URL) \
         .config("spark.driver.host", container_ip) \
+        .config("spark.executor.memory", exec_mem) \
+        .config("spark.driver.memory", driver_mem) \
         .config("spark.jars", "/opt/spark/jars/hadoop-aws-3.3.4.jar,/opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar") \
         .config("spark.hadoop.fs.s3a.endpoint", MINIO_ENDPOINT) \
         .config("spark.hadoop.fs.s3a.access.key", ACCESS_KEY) \

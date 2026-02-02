@@ -64,7 +64,7 @@ def clear_flag():
 # =====================================================================
 with DAG(
     dag_id='nyc_taxi_pipeline',
-    start_date=datetime(2024, 1, 1),
+    start_date=datetime(2026, 1, 1),
     schedule_interval='@daily',
     catchup=False
 ) as dag:

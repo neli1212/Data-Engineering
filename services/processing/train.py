@@ -28,7 +28,16 @@ MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "minioadmin")            
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minioadmin")        
 MASTER_URL = os.getenv("SPARK_MASTER_URL", "spark://spark-master:7077")  
-
+worker_mem = os.getenv("WORKER_MEMORY", "4g")
+exec_mem = os.getenv("EXECUTOR_MEMORY", "2g")
+worker_g = int(worker_mem.replace('g', '').replace('G', ''))
+if worker_mem.endswith('m'):
+    worker_g = worker_g / 1024
+exec_g = int(exec_mem.replace('g', '').replace('G', ''))
+if exec_mem.endswith('m'):
+    exec_g = exec_g / 1024
+driver_g = max(1, worker_g - exec_g - 1)  # Mindestens 1g
+driver_mem = f"{driver_g}g"
 # =====================================================================
 # Paths
 # =====================================================================
@@ -84,9 +93,9 @@ def main():
         .config("spark.default.parallelism", "500") \
         .config("spark.memory.fraction", "0.8") \
         .config("spark.memory.storageFraction", "0.3") \
-        .config("spark.executor.memory", "4g") \
-        .config("spark.driver.memory", "2g") \
-        .config("spark.driver.maxResultSize", "2g") \
+        .config("spark.executor.memory", exec_mem) \
+        .config("spark.driver.memory", driver_mem) \
+        .config("spark.driver.maxResultSize", max_res) \
         .config("spark.rdd.compress", "true")  \
         .config("spark.network.timeout", "600s")  \
         .getOrCreate()

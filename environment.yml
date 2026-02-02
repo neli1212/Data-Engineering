@@ -17,6 +17,6 @@ dependencies:
   - urllib3
   - jupyterlab
   - ipykernel
-  - ipywidgets
+  - openjdk=17
   - pip:
       - kagglehub==0.3.13
