@@ -38,6 +38,7 @@ if exec_mem.endswith('m'):
     exec_g = exec_g / 1024
 driver_g = max(1, worker_g - exec_g - 1)  # Mindestens 1g
 driver_mem = f"{driver_g}g"
+max_res = driver_mem
 # =====================================================================
 # Paths
 # =====================================================================
